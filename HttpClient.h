@@ -7,6 +7,7 @@
 #endif
 #include <string>
 #include <curl/curl.h>
+#include "CacheManager.h"
 using namespace std;
 class HttpClient {
 public:
@@ -17,6 +18,8 @@ public:
     static string githubToken; 
 
     static string get(const string& url) {
+        string cached = CacheManager::instance().get(url);
+        if (!cached.empty()) return cached;
         string response;
         CURL* curl = curl_easy_init();
         if (curl) {
@@ -34,6 +37,7 @@ public:
             curl_easy_perform(curl);
             curl_easy_cleanup(curl);
             curl_slist_free_all(headers);
+            if (!response.empty()) CacheManager::instance().set(url, response);
         }
         return response;
     }

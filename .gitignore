@@ -1,0 +1,8 @@
+.env
+cache.json
+*.exe
+build/
+*.o
+*.a
+*.obj
+*.d
