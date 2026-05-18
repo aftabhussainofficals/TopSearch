@@ -1,5 +1,5 @@
 #include "SearchEngine.h"
-#include "GitHubAPI.h"
+#include "PlatformAPIs.h"
 #include "HttpClient.h"
 #include <thread>
 #include <mutex>
@@ -7,6 +7,9 @@
 using namespace std;
 using json=nlohmann::json;
 static GitHubAPI api;
+static GitLabAPI gitlabApi;
+static NpmAPI npmApi;
+static StackOverflowAPI soApi;
 static string jsonStr(json obj,string key){
     if(!obj.contains(key)||obj[key].is_null()) return "N/A";
     if(obj[key].is_string()) return obj[key].get<string>();
@@ -105,8 +108,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             }
         }catch(...){statusMessage="Error parsing response.";}
     }else if(platformType==1){
-        string url="https://gitlab.com/api/v4/projects?visibility=public&search="+normalizedQuery+"&per_page=20&order_by=star_count&sort=desc";
-        string result=HttpClient::get(url);
+        string result=gitlabApi.searchProjects(normalizedQuery);
         if(result.empty()){statusMessage="No data from GitLab.";return;}
         try{
             json j=json::parse(result);
@@ -115,8 +117,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             statusMessage="GitLab: Found "+to_string(repos.size())+" projects.";
         }catch(...){statusMessage="Error parsing GitLab response.";}
     }else if(platformType==2){
-        string url="https://registry.npmjs.org/-/v1/search?text="+normalizedQuery+"&size=20";
-        string result=HttpClient::get(url);
+        string result=npmApi.searchPackages(normalizedQuery);
         if(result.empty()){statusMessage="No data from npm.";return;}
         try{
             json j=json::parse(result);
@@ -125,8 +126,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             statusMessage="npm: Found "+to_string(packages.size())+" packages.";
         }catch(...){statusMessage="Error parsing npm response.";}
     }else if(platformType==3){
-        string url="https://api.stackexchange.com/2.3/search/advanced?q="+normalizedQuery+"&site=stackoverflow&pagesize=20&order=desc&sort=votes&filter=default";
-        string result=HttpClient::get(url);
+        string result=soApi.searchQuestions(normalizedQuery);
         if(result.empty()){statusMessage="No data from Stack Overflow.";return;}
         try{
             json j=json::parse(result);

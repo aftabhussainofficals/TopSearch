@@ -164,11 +164,11 @@ static vector<Profile> rankProfiles(const vector<Profile>& base){
                 json p=json::parse(data);
                 Profile prof;
                 prof.username=uname;
-                prof.name=p.value("name","");
-                prof.bio=p.value("bio","");
-                prof.followers=p.value("followers",0);
-                prof.repos=p.value("public_repos",0);
-                prof.following=p.value("following",0);
+                prof.name=(p.contains("name")&&p["name"].is_string())?p["name"].get<string>():"";
+                prof.bio=(p.contains("bio")&&p["bio"].is_string())?p["bio"].get<string>():"";
+                prof.followers=(p.contains("followers")&&p["followers"].is_number())?p["followers"].get<int>():0;
+                prof.repos=(p.contains("public_repos")&&p["public_repos"].is_number())?p["public_repos"].get<int>():0;
+                prof.following=(p.contains("following")&&p["following"].is_number())?p["following"].get<int>():0;
                 prof.score=prof.followers*3+prof.repos*2+prof.following;
                 lock_guard<mutex> lock(mtx);
                 ranked.push_back(prof);

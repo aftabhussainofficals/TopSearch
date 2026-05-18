@@ -1,6 +1,6 @@
 @echo off
 g++ -std=c++17 -O2 ^
-    main.cpp SearchEngine.cpp GitHubAPI.cpp ^
+    main.cpp SearchEngine.cpp PlatformAPIs.cpp ^
     -I C:/msys64/ucrt64/include ^
     -L C:/msys64/ucrt64/lib ^
     -lcurl ^

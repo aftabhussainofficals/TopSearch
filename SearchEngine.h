@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include "PlatformAPIs.h"
 struct Profile{
     std::string username;
     std::string name;
