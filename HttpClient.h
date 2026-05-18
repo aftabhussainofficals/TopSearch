@@ -43,27 +43,27 @@ public:
     static bool downloadFile(const string& url,const string& filename){
         CURL* curl=curl_easy_init();
         if(!curl) return false;
-        FILE* fp=fopen(filename.c_str(),"wb");
-        if(!fp) return false;
+        FILE* filePtr=fopen(filename.c_str(),"wb");
+        if(!filePtr) return false;
         curl_easy_setopt(curl,CURLOPT_URL,url.c_str());
         curl_easy_setopt(curl,CURLOPT_FOLLOWLOCATION,1L);
         curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1L);
         curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2L);
         curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,fwrite);
-        curl_easy_setopt(curl,CURLOPT_WRITEDATA,fp);
+        curl_easy_setopt(curl,CURLOPT_WRITEDATA,filePtr);
         curl_easy_setopt(curl,CURLOPT_FAILONERROR,1L);
         struct curl_slist* headers=nullptr;
         headers=curl_slist_append(headers,"User-Agent: TopSearch");
         curl_easy_setopt(curl,CURLOPT_HTTPHEADER,headers);
-        CURLcode res=curl_easy_perform(curl);
+        CURLcode curlResult=curl_easy_perform(curl);
         curl_easy_cleanup(curl);
         curl_slist_free_all(headers);
-        fclose(fp);
-        return(res==CURLE_OK);
+        fclose(filePtr);
+        return(curlResult==CURLE_OK);
     }
-    static string normalizeQuery(string q){
+    static string normalizeQuery(string query){
         string cleaned;
-        for(char c:q){
+        for(char c:query){
             if(c==' ') continue;
             cleaned+=tolower(c);
         }

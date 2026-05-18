@@ -8,8 +8,8 @@ using json=nlohmann::json;
 class CacheManager{
 public:
     static CacheManager& instance(){
-        static CacheManager inst;
-        return inst;
+        static CacheManager instance;
+        return instance;
     }
     string get(const string& key){
         load();
@@ -37,11 +37,11 @@ private:
     void load(){
         if(loaded_) return;
         loaded_=true;
-        ifstream f(FILE);
-        if(f.is_open()) try{f>>data_;}catch(...){data_={};}
+        ifstream file(FILE);
+        if(file.is_open()) try{file>>data_;}catch(...){data_={};}
     }
     void save(){
-        ofstream f(FILE);
-        if(f.is_open()) f<<data_.dump(2);
+        ofstream file(FILE);
+        if(file.is_open()) file<<data_.dump(2);
     }
 };

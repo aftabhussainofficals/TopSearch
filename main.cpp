@@ -12,8 +12,8 @@
 using namespace std;
 using json=nlohmann::json;
 string HttpClient::githubToken=[](){
-    const char* t=getenv("GITHUB_TOKEN");
-    return t?string(t):string();
+    const char* token=getenv("GITHUB_TOKEN");
+    return token?string(token):string();
 }();
 #define RESET "\033[0m"
 #define BOLD "\033[1m"
@@ -58,34 +58,34 @@ static int pickMenu(const string& prompt,const vector<string>& opts,bool showBac
         cout<<"\n  "<<BOLD<<"> "<<RESET;
     };
     cls();printIt();
-    int c;
-    int lo=showBack?0:1;
-    while(!(cin>>c)||c<lo||c>(int)opts.size()){
+    int choice;
+    int minChoice=showBack?0:1;
+    while(!(cin>>choice)||choice<minChoice||choice>(int)opts.size()){
         cin.clear();cin.ignore(1000,'\n');
         cout<<RED<<"  Invalid, try again..."<<RESET;
         this_thread::sleep_for(chrono::milliseconds(900));
         cls();printIt();
     }
     cin.ignore(1000,'\n');
-    return c==0?-1:c-1;
+    return choice==0?-1:choice-1;
 }
-static string sv(const json& o,const string& k){
-    if(!o.contains(k)||o[k].is_null()) return "N/A";
-    return o[k].is_string()?o[k].get<string>():o[k].dump();
+static string jsonStr(const json& obj,const string& key){
+    if(!obj.contains(key)||obj[key].is_null()) return "N/A";
+    return obj[key].is_string()?obj[key].get<string>():obj[key].dump();
 }
-static int iv(const json& o,const string& k){
-    return(o.contains(k)&&!o[k].is_null())?o[k].get<int>():0;
+static int jsonInt(const json& obj,const string& key){
+    return(obj.contains(key)&&!obj[key].is_null())?obj[key].get<int>():0;
 }
 static void printReposGitHub(const vector<json>& repos){
     for(int i=0;i<(int)repos.size();i++){
         const json& r=repos[i];
-        string owner=r.contains("owner")?sv(r["owner"],"login"):"?";
-        string name=sv(r,"name");
-        string desc=sv(r,"description");
-        string lang=sv(r,"language");
+        string owner=r.contains("owner")?jsonStr(r["owner"],"login"):"?";
+        string name=jsonStr(r,"name");
+        string desc=jsonStr(r,"description");
+        string lang=jsonStr(r,"language");
         cout<<"\n  "<<BOLD<<BLUE<<"["<<(i+1)<<"] "<<owner<<" / "<<name<<RESET<<"\n";
         cout<<"  "<<DIM<<"https://github.com/"<<owner<<"/"<<name<<RESET<<"\n";
-        cout<<"  "<<YELLOW<<"* "<<iv(r,"stargazers_count")<<" stars  F "<<iv(r,"forks_count")<<" forks";
+        cout<<"  "<<YELLOW<<"* "<<jsonInt(r,"stargazers_count")<<" stars  F "<<jsonInt(r,"forks_count")<<" forks";
         if(lang!="N/A") cout<<"  ["<<lang<<"]";
         cout<<RESET<<"\n";
         if(desc!="N/A"&&!desc.empty()) cout<<"  "<<desc<<"\n";
@@ -112,10 +112,10 @@ static void printProfiles(const vector<Profile>& profiles,bool ranked){
 static void printReposGitLab(const vector<json>& repos){
     for(int i=0;i<(int)repos.size();i++){
         const json& r=repos[i];
-        cout<<"\n  "<<BOLD<<MAGENTA<<"["<<(i+1)<<"] "<<sv(r,"name_with_namespace")<<RESET<<"\n";
-        cout<<"  "<<DIM<<sv(r,"web_url")<<RESET<<"\n";
-        cout<<"  "<<YELLOW<<"* "<<iv(r,"star_count")<<" stars  F "<<iv(r,"forks_count")<<" forks"<<RESET<<"\n";
-        string desc=sv(r,"description");
+        cout<<"\n  "<<BOLD<<MAGENTA<<"["<<(i+1)<<"] "<<jsonStr(r,"name_with_namespace")<<RESET<<"\n";
+        cout<<"  "<<DIM<<jsonStr(r,"web_url")<<RESET<<"\n";
+        cout<<"  "<<YELLOW<<"* "<<jsonInt(r,"star_count")<<" stars  F "<<jsonInt(r,"forks_count")<<" forks"<<RESET<<"\n";
+        string desc=jsonStr(r,"description");
         if(desc!="N/A"&&!desc.empty()) cout<<"  "<<desc<<"\n";
         sep();
     }
@@ -123,10 +123,10 @@ static void printReposGitLab(const vector<json>& repos){
 static void printNpm(const vector<json>& packages){
     for(int i=0;i<(int)packages.size();i++){
         const json& pkg=packages[i]["package"];
-        string name=sv(pkg,"name");
-        string ver=sv(pkg,"version");
-        string desc=sv(pkg,"description");
-        string author=pkg.contains("publisher")?sv(pkg["publisher"],"username"):"N/A";
+        string name=jsonStr(pkg,"name");
+        string ver=jsonStr(pkg,"version");
+        string desc=jsonStr(pkg,"description");
+        string author=pkg.contains("publisher")?jsonStr(pkg["publisher"],"username"):"N/A";
         cout<<"\n  "<<BOLD<<RED<<"["<<(i+1)<<"] "<<name<<RESET<<"  "<<DIM<<"v"<<ver<<RESET<<"\n";
         cout<<"  "<<DIM<<"https://www.npmjs.com/package/"<<name<<RESET<<"\n";
         if(author!="N/A") cout<<"  "<<DIM<<"by "<<author<<RESET<<"\n";
@@ -138,13 +138,13 @@ static void printSO(const vector<json>& questions){
     for(int i=0;i<(int)questions.size();i++){
         const json& q=questions[i];
         bool solved=q.value("is_answered",false);
-        cout<<"\n  "<<BOLD<<BLUE<<"["<<(i+1)<<"] "<<sv(q,"title")<<RESET<<"\n";
-        cout<<"  "<<DIM<<sv(q,"link")<<RESET<<"\n";
+        cout<<"\n  "<<BOLD<<BLUE<<"["<<(i+1)<<"] "<<jsonStr(q,"title")<<RESET<<"\n";
+        cout<<"  "<<DIM<<jsonStr(q,"link")<<RESET<<"\n";
         cout<<"  "<<(solved?GREEN:DIM)<<(solved?"[Answered]":"[Open]")<<RESET
-            <<"  Score:"<<iv(q,"score")<<"  Answers:"<<iv(q,"answer_count")<<"  Views:"<<iv(q,"view_count")<<"\n";
+            <<"  Score:"<<jsonInt(q,"score")<<"  Answers:"<<jsonInt(q,"answer_count")<<"  Views:"<<jsonInt(q,"view_count")<<"\n";
         if(q.contains("tags")&&q["tags"].is_array()){
             cout<<"  ";
-            for(auto& t:q["tags"]) cout<<CYAN<<"["<<t.get<string>()<<"] "<<RESET;
+            for(auto& tag:q["tags"]) cout<<CYAN<<"["<<tag.get<string>()<<"] "<<RESET;
             cout<<"\n";
         }
         sep();
@@ -217,10 +217,10 @@ int main(){
                         string name=r.value("name","?");
                         string branch=r.value("default_branch","main");
                         string zipURL="https://github.com/"+owner+"/"+name+"/archive/refs/heads/"+branch+".zip";
-                        string fname=name+".zip";
-                        cout<<"  "<<DIM<<"Downloading "<<fname<<"...\n"<<RESET;
-                        bool ok=HttpClient::downloadFile(zipURL,fname);
-                        cout<<"  "<<(ok?GREEN:RED)<<(ok?"Saved: ":"Failed: ")<<fname<<RESET<<"\n";
+                        string zipFilename=name+".zip";
+                        cout<<"  "<<DIM<<"Downloading "<<zipFilename<<"...\n"<<RESET;
+                        bool downloaded=HttpClient::downloadFile(zipURL,zipFilename);
+                        cout<<"  "<<(downloaded?GREEN:RED)<<(downloaded?"Saved: ":"Failed: ")<<zipFilename<<RESET<<"\n";
                     }
                 }
             }else if(searchType==0){
