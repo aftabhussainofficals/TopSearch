@@ -76,11 +76,30 @@ pacman -S mingw-w64-ucrt-x86_64-nlohmann-json
 
 ## Build
 
+### Release
+
 ```bash
 build.bat
 ```
 
 Output: `TopSearch.exe`
+
+### Debug
+
+```bash
+g++ -std=c++17 -g -O0 \
+    main.cpp SearchEngine.cpp PlatformAPIs.cpp \
+    -I C:/msys64/ucrt64/include \
+    -L C:/msys64/ucrt64/lib \
+    -lcurl \
+    -o TopSearch_debug.exe
+```
+
+Output: `TopSearch_debug.exe` — includes debug symbols, compatible with GDB:
+
+```bash
+gdb TopSearch_debug.exe
+```
 
 ---
 

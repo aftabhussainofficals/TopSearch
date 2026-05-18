@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "SearchEngine.h"
 #include "HttpClient.h"
-#include "GitHubAPI.h"
+#include "PlatformAPIs.h"
 #include <iostream>
 #include <string>
 #include <vector>

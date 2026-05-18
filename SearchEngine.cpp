@@ -6,6 +6,7 @@
 #include <algorithm>
 using namespace std;
 using json=nlohmann::json;
+
 static GitHubAPI api;
 static GitLabAPI gitlabApi;
 static NpmAPI npmApi;
@@ -21,7 +22,8 @@ static int jsonInt(json obj,string key){
 static Profile fetchProfileData(const string& username){
     Profile prof;
     prof.username=username;
-    string data=api.fetchProfile(username);
+    GitHubAPI localApi;
+    string data=localApi.fetchProfile(username);
     if(data.empty()) return prof;
     try{
         json p=json::parse(data);

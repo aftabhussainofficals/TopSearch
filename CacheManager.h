@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <chrono>
+#include <mutex>
 #include <nlohmann/json.hpp>
 using namespace std;
 using json=nlohmann::json;
@@ -12,6 +13,7 @@ public:
         return instance;
     }
     string get(const string& key){
+        lock_guard<mutex> lock(mtx_);
         load();
         if(!data_.contains(key)) return "";
         long long ts=data_[key]["ts"].get<long long>();
@@ -19,6 +21,7 @@ public:
         return data_[key]["val"].get<string>();
     }
     void set(const string& key,const string& value){
+        lock_guard<mutex> lock(mtx_);
         load();
         data_[key]={{"ts",now()},{"val",value}};
         save();
@@ -26,6 +29,7 @@ public:
     void clear(){data_={};save();}
 private:
     CacheManager()=default;
+    mutex mtx_;
     json data_;
     bool loaded_=false;
     const long long TTL=3600;

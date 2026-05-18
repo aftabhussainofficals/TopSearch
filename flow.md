@@ -17,6 +17,7 @@ A detailed walkthrough of how TopSearch works internally, from startup to result
 6. [npm Flow](#6-npm-flow)
 7. [Stack Overflow Flow](#7-stack-overflow-flow)
 8. [HTTP Layer](#8-http-layer)
+   - [Cache Layer](#8a-cache-layer)
 9. [Query Normalization](#9-query-normalization)
 10. [Result Rendering](#10-result-rendering)
 11. [Navigation & Back](#11-navigation--back)
@@ -39,6 +40,7 @@ main()
 - ANSI color codes (`\033[...m`) are activated via `SetConsoleMode` with `ENABLE_VIRTUAL_TERMINAL_PROCESSING`.
 - UTF-8 output is enabled so special characters render correctly.
 - A single `SearchEngine` instance is reused across all searches (its result vectors are cleared on each new search).
+- The GitHub token is read from the `GITHUB_TOKEN` environment variable at startup (not hardcoded).
 
 ---
 
@@ -264,11 +266,14 @@ Results are sorted by votes descending — highest quality answers surface first
 
 ## 8. HTTP Layer
 
-`HttpClient` is a static utility class wrapping libcurl. All network I/O passes through it.
+`HttpClient` is a static utility class wrapping libcurl. All network I/O passes through it. Every `get()` call checks `CacheManager` before making a network request.
 
 ```
 HttpClient::get(url)
   │
+  ├── CacheManager::instance().get(url)
+  │     ├── hit (not expired) → return cached string immediately
+  │     └── miss → continue
   ├── curl_easy_init()
   ├── set headers:
   │     ├── User-Agent: TopSearch
@@ -278,6 +283,7 @@ HttpClient::get(url)
   │     └── appends chunks to std::string response
   ├── curl_easy_perform()
   ├── curl_easy_cleanup()
+  ├── CacheManager::instance().set(url, response)  ← store for 1 hour
   └── return response string
 
 HttpClient::downloadFile(url, filename)
@@ -294,7 +300,31 @@ HttpClient::downloadFile(url, filename)
   └── return (res == CURLE_OK)
 ```
 
-**Token storage:** `HttpClient::githubToken` is a static string defined once in `main.cpp`. It is injected into every GitHub request header automatically.
+**Token storage:** `HttpClient::githubToken` is a static string initialized from the `GITHUB_TOKEN` environment variable at startup. It is injected into every GitHub request header automatically.
+
+---
+
+## 8a. Cache Layer
+
+`CacheManager` is a singleton that persists API responses to `cache.json` with a 1-hour TTL. It is thread-safe via a mutex.
+
+```
+CacheManager::get(key)
+  │
+  ├── load cache.json (once, lazy)
+  ├── key present?
+  │     ├── no  → return ""
+  │     └── yes → check timestamp
+  │               ├── expired (> 3600s) → erase entry, return ""
+  │               └── fresh → return cached value
+
+CacheManager::set(key, value)
+  │
+  ├── store {ts: now(), val: value} under key
+  └── save cache.json
+```
+
+This avoids redundant API calls for repeated identical queries within the same hour.
 
 ---
 
@@ -363,21 +393,23 @@ The main loop is entirely `while(true)` with `continue` for back-navigation and 
                           │
           ┌───────────────┼───────────────┐
           │               │               │
-    ┌─────▼─────┐   ┌─────▼──────┐  ┌────▼──────┐
-    │ GitHubAPI │   │ HttpClient │  │  nlohmann │
-    │           │   │  (libcurl) │  │   /json   │
-    └─────┬─────┘   └─────┬──────┘  └───────────┘
-          │               │
-          └───────────────┘
-                  │
-         ┌────────▼────────┐
-         │   External APIs  │
-         │                 │
-         │  api.github.com │
-         │  gitlab.com/api │
-         │  registry.npmjs │
-         │  api.stackexch. │
-         └─────────────────┘
+    ┌─────▼──────┐  ┌─────▼──────┐  ┌────▼──────┐
+    │PlatformAPIs│  │ HttpClient │  │  nlohmann │
+    │ GitHubAPI  │  │  (libcurl) │  │   /json   │
+    │ GitLabAPI  │  └─────┬──────┘  └───────────┘
+    │ NpmAPI     │        │
+    │ StackOverfl│  ┌─────▼──────┐
+    └────────────┘  │CacheManager│
+                    │ cache.json │
+                    └─────┬──────┘
+                          │
+               ┌──────────▼──────────┐
+               │    External APIs    │
+               │  api.github.com     │
+               │  gitlab.com/api     │
+               │  registry.npmjs     │
+               │  api.stackexch.     │
+               └─────────────────────┘
 ```
 
 ---
@@ -397,15 +429,15 @@ normalizeQuery()
     ▼
 SearchEngine::search(query, platform, searchType)
     │
-    ├──[GitHub]──► GitHubAPI ──► HttpClient::get() ──► GitHub REST API
-    │                │
+    ├──[GitHub]──► GitHubAPI ──► HttpClient::get() ──► CacheManager ──► GitHub REST API
+    │                │                                  (hit: skip)      (miss: fetch)
     │                └──[Skills]──► parallel threads ──► /users/{login} × N
     │
-    ├──[GitLab]──► HttpClient::get() ──► GitLab API v4
+    ├──[GitLab]──► GitLabAPI ──► HttpClient::get() ──► CacheManager ──► GitLab API v4
     │
-    ├──[npm]────► HttpClient::get() ──► npm Registry v1
+    ├──[npm]────► NpmAPI ────► HttpClient::get() ──► CacheManager ──► npm Registry v1
     │
-    └──[SO]─────► HttpClient::get() ──► StackExchange API v2.3
+    └──[SO]─────► StackOverflowAPI ──► HttpClient::get() ──► CacheManager ──► StackExchange API v2.3
                           │
                           ▼
                    JSON response string
