@@ -15,16 +15,16 @@ string HttpClient::githubToken=[](){
     const char* token=getenv("GITHUB_TOKEN");
     return token?string(token):string();
 }();
-#define RESET "\033[0m"
-#define BOLD "\033[1m"
-#define DIM "\033[2m"
-#define CYAN "\033[96m"
-#define BLUE "\033[94m"
-#define GREEN "\033[92m"
-#define YELLOW "\033[93m"
-#define RED "\033[91m"
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define DIM     "\033[2m"
+#define CYAN    "\033[96m"
+#define BLUE    "\033[94m"
+#define GREEN   "\033[92m"
+#define YELLOW  "\033[93m"
+#define RED     "\033[91m"
 #define MAGENTA "\033[95m"
-#define WHITE "\033[97m"
+#define WHITE   "\033[97m"
 static void enableANSI(){
     HANDLE h=GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode=0;
@@ -176,7 +176,7 @@ static vector<Profile> rankProfiles(const vector<Profile>& base){
         }));
     }
     for(auto& t:threads) t.join();
-    sort(ranked.begin(),ranked.end(),[](const Profile& a,const Profile& b){return a.score>b.score;});
+    sort(ranked.begin(),ranked.end(),greater<Profile>());
     return ranked;
 }
 int main(){

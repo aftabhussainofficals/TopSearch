@@ -11,6 +11,9 @@ static GitHubAPI api;
 static GitLabAPI gitlabApi;
 static NpmAPI npmApi;
 static StackOverflowAPI soApi;
+
+static BasePlatformAPI* platforms[]={&api,&gitlabApi,&npmApi,&soApi};
+
 static string jsonStr(json obj,string key){
     if(!obj.contains(key)||obj[key].is_null()) return "N/A";
     if(obj[key].is_string()) return obj[key].get<string>();
@@ -110,7 +113,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             }
         }catch(...){statusMessage="Error parsing response.";}
     }else if(platformType==1){
-        string result=gitlabApi.searchProjects(normalizedQuery);
+        string result=platforms[platformType]->search(normalizedQuery);
         if(result.empty()){statusMessage="No data from GitLab.";return;}
         try{
             json j=json::parse(result);
@@ -119,7 +122,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             statusMessage="GitLab: Found "+to_string(repos.size())+" projects.";
         }catch(...){statusMessage="Error parsing GitLab response.";}
     }else if(platformType==2){
-        string result=npmApi.searchPackages(normalizedQuery);
+        string result=platforms[platformType]->search(normalizedQuery);
         if(result.empty()){statusMessage="No data from npm.";return;}
         try{
             json j=json::parse(result);
@@ -128,7 +131,7 @@ void SearchEngine::search(const string& query,int platformType,int searchType){
             statusMessage="npm: Found "+to_string(packages.size())+" packages.";
         }catch(...){statusMessage="Error parsing npm response.";}
     }else if(platformType==3){
-        string result=soApi.searchQuestions(normalizedQuery);
+        string result=platforms[platformType]->search(normalizedQuery);
         if(result.empty()){statusMessage="No data from Stack Overflow.";return;}
         try{
             json j=json::parse(result);

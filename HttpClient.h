@@ -9,6 +9,7 @@
 #include <curl/curl.h>
 #include "CacheManager.h"
 using namespace std;
+
 class HttpClient{
 public:
     static size_t WriteCallback(void* contents,size_t size,size_t nmemb,string* data){

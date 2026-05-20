@@ -3,12 +3,16 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include "PlatformAPIs.h"
+
 struct Profile{
     std::string username;
     std::string name;
     std::string bio;
     int followers=0,repos=0,following=0,score=0;
+    bool operator>(const Profile& other) const{return score>other.score;}
+    bool operator<(const Profile& other) const{return score<other.score;}
 };
+
 class SearchEngine{
 public:
     SearchEngine();
