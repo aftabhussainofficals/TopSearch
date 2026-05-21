@@ -1,0 +1,20 @@
+[
+{
+  "directory": "C:/Users/DELL/Desktop/TopSearch/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe   -g -std=gnu++17 -o CMakeFiles\\TopSearch.dir\\main.cpp.obj -c C:\\Users\\DELL\\Desktop\\TopSearch\\main.cpp",
+  "file": "C:/Users/DELL/Desktop/TopSearch/main.cpp",
+  "output": "CMakeFiles/TopSearch.dir/main.cpp.obj"
+},
+{
+  "directory": "C:/Users/DELL/Desktop/TopSearch/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe   -g -std=gnu++17 -o CMakeFiles\\TopSearch.dir\\SearchEngine.cpp.obj -c C:\\Users\\DELL\\Desktop\\TopSearch\\SearchEngine.cpp",
+  "file": "C:/Users/DELL/Desktop/TopSearch/SearchEngine.cpp",
+  "output": "CMakeFiles/TopSearch.dir/SearchEngine.cpp.obj"
+},
+{
+  "directory": "C:/Users/DELL/Desktop/TopSearch/build",
+  "command": "C:\\msys64\\ucrt64\\bin\\g++.exe   -g -std=gnu++17 -o CMakeFiles\\TopSearch.dir\\PlatformAPIs.cpp.obj -c C:\\Users\\DELL\\Desktop\\TopSearch\\PlatformAPIs.cpp",
+  "file": "C:/Users/DELL/Desktop/TopSearch/PlatformAPIs.cpp",
+  "output": "CMakeFiles/TopSearch.dir/PlatformAPIs.cpp.obj"
+}
+]
